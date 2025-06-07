@@ -9,7 +9,7 @@ builder.Services.AddRazorPages();
 //   client.BaseAddress = new Uri("https://localhost:7126/");
 //});
 builder.Services.AddHttpClient();
-builder.Services.AddAuthen();
+builder.Services.AddAuthen(builder.Configuration);
 
 var app = builder.Build();
 
