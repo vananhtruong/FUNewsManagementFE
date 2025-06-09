@@ -11,11 +11,13 @@ namespace FUNewsManagementSystem.Pages.SystemAccounts
     {
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _config;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public LoginModel(HttpClient httpClient, IConfiguration config)
+        public LoginModel(HttpClient httpClient, IConfiguration config, IHttpClientFactory httpClientFactory)
         {
             _httpClient = httpClient;
             _config = config;
+            _httpClientFactory = httpClientFactory;
         }
 
         [BindProperty]
@@ -48,7 +50,9 @@ namespace FUNewsManagementSystem.Pages.SystemAccounts
                 Email = Input.Email,
                 Password = Input.Password
             };
-            var response = await _httpClient.PostAsJsonAsync("https://localhost:7126/api/SystemAccount/Login", loginModel);
+            var client = _httpClientFactory.CreateClient("MyApi");
+
+            var response = await client.PostAsJsonAsync("api/SystemAccount/Login", loginModel);
 
             if (response.IsSuccessStatusCode)
             {

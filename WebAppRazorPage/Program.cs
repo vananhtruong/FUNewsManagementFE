@@ -1,13 +1,14 @@
-using WebAppRazorPage;
+﻿using WebAppRazorPage;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
-//builder.Services.AddHttpClient("MyApi", client =>
-//{
-//   client.BaseAddress = new Uri("https://localhost:7126/");
-//});
+builder.Services.AddHttpClient("MyApi", client => {
+    client.BaseAddress = new Uri(builder.Configuration["ApiBaseUrl"]);
+});
+
+
 builder.Services.AddHttpClient();
 builder.Services.AddAuthen(builder.Configuration);
 

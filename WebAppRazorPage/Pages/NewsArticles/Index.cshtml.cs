@@ -30,6 +30,7 @@ namespace FUNewsManagementSystem.Pages.NewsArticles
         public async Task OnGetAsync(string searchString)
         {
             NewsArticles = await _httpClient.GetFromJsonAsync<IEnumerable<NewsArticle>>("https://localhost:7126/api/NewsArticle");
+            NewsArticles = NewsArticles.OrderByDescending(a => a.CreatedDate).ToList();
 
             if (!string.IsNullOrEmpty(searchString))
             {
