@@ -1,29 +1,23 @@
 using BusinessObject.Entities;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace FUNewsManagementSystem.Pages.NewsArticles
 {
     public class LecturerNewsModel : PageModel
     {
-        private readonly HttpClient _httpClient;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public LecturerNewsModel(HttpClient httpClient)
+        public LecturerNewsModel(IHttpClientFactory httpClientFactory)
         {
-            _httpClient = httpClient;
-
+            _httpClientFactory = httpClientFactory;
         }
-
 
         public IEnumerable<NewsArticle> NewsArticles { get; set; } = Enumerable.Empty<NewsArticle>();
 
-      
         public async Task OnGetAsync(string id)
         {
-            NewsArticles = await _httpClient.GetFromJsonAsync<IEnumerable<NewsArticle>>("https://localhost:7126/api/NewsArticle/active");
-
+            var client = _httpClientFactory.CreateClient("MyApi");
+            NewsArticles = await client.GetFromJsonAsync<IEnumerable<NewsArticle>>("api/NewsArticle/active");
         }
-
     }
 }

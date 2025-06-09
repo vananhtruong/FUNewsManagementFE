@@ -8,20 +8,19 @@ namespace FUNewsManagementSystem.Pages.SystemAccounts
     [Authorize(Policy = "AdminOnly")]
     public class DetailsModel : PageModel
     {
-        private readonly HttpClient _httpClient;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public DetailsModel(HttpClient httpClient)
+        public DetailsModel(IHttpClientFactory httpClientFactory)
         {
-            _httpClient = httpClient;
+            _httpClientFactory = httpClientFactory;
         }
 
         public SystemAccount SystemAccount { get; set; } = default!;
 
-     
         public async Task<IActionResult> OnGetAsync(short id)
         {
-          
-            var systemaccount = await _httpClient.GetFromJsonAsync<SystemAccount>($"https://localhost:7126/api/SystemAccount/{id}");
+            var client = _httpClientFactory.CreateClient("MyApi");
+            var systemaccount = await client.GetFromJsonAsync<SystemAccount>($"api/SystemAccount/{id}");
             if (systemaccount == null)
             {
                 return NotFound();

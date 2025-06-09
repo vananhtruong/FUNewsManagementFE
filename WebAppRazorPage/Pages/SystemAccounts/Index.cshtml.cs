@@ -7,19 +7,19 @@ namespace FUNewsManagementSystem.Pages.SystemAccounts
     [Authorize(Policy = "AdminOnly")]
     public class IndexModel : PageModel
     {
-        private readonly HttpClient _httpClient;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public IndexModel(HttpClient httpClient)
+        public IndexModel(IHttpClientFactory httpClientFactory)
         {
-            _httpClient = httpClient;
+            _httpClientFactory = httpClientFactory;
         }
 
         public IEnumerable<SystemAccount> Accounts { get; set; } = Enumerable.Empty<SystemAccount>();
 
         public async Task OnGetAsync()
         {
-            Accounts = await _httpClient.GetFromJsonAsync<List<SystemAccount>>("https://localhost:7126/api/SystemAccount");
+            var client = _httpClientFactory.CreateClient("MyApi");
+            Accounts = await client.GetFromJsonAsync<List<SystemAccount>>("api/SystemAccount");
         }
-
     }
 }

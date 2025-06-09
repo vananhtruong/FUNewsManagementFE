@@ -9,7 +9,7 @@ namespace FUNewsManagementSystem.Pages.SystemAccounts
     [Authorize]
     public class EditProfileModel : PageModel
     {
-        private readonly HttpClient _httpClient;
+        private readonly IHttpClientFactory _httpClientFactory;
 
         [BindProperty]
         public SystemAccount SystemAccount { get; set; }
@@ -20,20 +20,21 @@ namespace FUNewsManagementSystem.Pages.SystemAccounts
         [BindProperty]
         public string NewPassword { get; set; }
 
-        public EditProfileModel(HttpClient httpClient)
+        public EditProfileModel(IHttpClientFactory httpClientFactory)
         {
-            _httpClient = httpClient;
+            _httpClientFactory = httpClientFactory;
         }
 
         public async Task<IActionResult> OnGetAsync()
         {
+            var client = _httpClientFactory.CreateClient("MyApi");
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userIdClaim) || !short.TryParse(userIdClaim, out short userId))
             {
                 return Unauthorized();
             }
 
-            var account = await _httpClient.GetFromJsonAsync<SystemAccount>($"https://localhost:7126/api/SystemAccount/{userId}");
+            var account = await client.GetFromJsonAsync<SystemAccount>($"api/SystemAccount/{userId}");
             if (account == null) return NotFound();
 
             SystemAccount = account;
@@ -42,6 +43,7 @@ namespace FUNewsManagementSystem.Pages.SystemAccounts
 
         public async Task<IActionResult> OnPostAsync()
         {
+            var client = _httpClientFactory.CreateClient("MyApi");
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userIdClaim) || !short.TryParse(userIdClaim, out short userId))
             {
@@ -50,7 +52,7 @@ namespace FUNewsManagementSystem.Pages.SystemAccounts
 
             if (userId != SystemAccount.AccountId) return Forbid();
 
-            var existingAccount = await _httpClient.GetFromJsonAsync<SystemAccount>($"https://localhost:7126/api/SystemAccount/{userId}");
+            var existingAccount = await client.GetFromJsonAsync<SystemAccount>($"api/SystemAccount/{userId}");
             if (existingAccount == null) return NotFound();
 
             // Kiểm tra nếu người dùng nhập mật khẩu cũ và mới
@@ -66,7 +68,7 @@ namespace FUNewsManagementSystem.Pages.SystemAccounts
 
             existingAccount.AccountName = SystemAccount.AccountName;
 
-            await _httpClient.PutAsJsonAsync($"https://localhost:7126/api/SystemAccount", existingAccount);
+            await client.PutAsJsonAsync($"api/SystemAccount", existingAccount);
             TempData["SuccessMessage"] = "Profile updated successfully!";
 
             return RedirectToPage("/SystemAccounts/EditProfile");

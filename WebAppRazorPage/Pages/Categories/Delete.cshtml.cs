@@ -5,16 +5,17 @@ namespace FUNewsManagementSystem.Pages.Categories
 {
     public class DeleteModel : PageModel
     {
-        private readonly HttpClient _httpClient;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public DeleteModel(HttpClient httpClient)
+        public DeleteModel(IHttpClientFactory httpClientFactory)
         {
-            _httpClient = httpClient;
+            _httpClientFactory = httpClientFactory;
         }
 
         public async Task<IActionResult> OnPostAsync(short id)
         {
-            var response = await _httpClient.DeleteAsync($"https://localhost:7126/api/Category/{id}");
+            var client = _httpClientFactory.CreateClient("MyApi");
+            var response = await client.DeleteAsync($"api/Category/{id}");
 
             if (response.IsSuccessStatusCode)
             {
@@ -22,8 +23,6 @@ namespace FUNewsManagementSystem.Pages.Categories
             }
             var error = await response.Content.ReadAsStringAsync();
             return BadRequest(error);
-        
         }
-
     }
 }

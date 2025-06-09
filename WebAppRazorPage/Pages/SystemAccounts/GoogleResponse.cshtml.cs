@@ -8,11 +8,11 @@ namespace WebAppRazorPage.Pages.SystemAccounts
 {
     public class GoogleResponseModel : PageModel
     {
-        private readonly HttpClient _httpClient;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public GoogleResponseModel(HttpClient httpClient)
+        public GoogleResponseModel(IHttpClientFactory httpClientFactory)
         {
-            _httpClient = httpClient;
+            _httpClientFactory = httpClientFactory;
         }
 
         public async Task<IActionResult> OnGetAsync()
@@ -28,10 +28,11 @@ namespace WebAppRazorPage.Pages.SystemAccounts
             {
                 AccountEmail = email,
                 AccountName = name,
-                AccountRole = 2 
+                AccountRole = 2
             };
 
-            var response = await _httpClient.PostAsJsonAsync("https://localhost:7126/api/SystemAccount/loginwithgoogle", logingooglemodel);
+            var client = _httpClientFactory.CreateClient("MyApi");
+            var response = await client.PostAsJsonAsync("api/SystemAccount/loginwithgoogle", logingooglemodel);
             if (response.IsSuccessStatusCode)
             {
                 var user = await response.Content.ReadFromJsonAsync<SystemAccount>();

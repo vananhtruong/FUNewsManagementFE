@@ -6,22 +6,22 @@ using Microsoft.AspNetCore.Authorization;
 namespace FUNewsManagementSystem.Pages.NewsArticles
 {
     [Authorize(Policy = "StaffOnly")]
-
     public class DetailsModel : PageModel
     {
-        private readonly HttpClient _httpClient;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public DetailsModel(HttpClient httpClient)
+        public DetailsModel(IHttpClientFactory httpClientFactory)
         {
-            _httpClient = httpClient;
+            _httpClientFactory = httpClientFactory;
         }
-
 
         public NewsArticle NewsArticle { get; set; } = default!;
 
         public async Task<IActionResult> OnGetAsync(string id)
         {
-            var article = await _httpClient.GetFromJsonAsync<NewsArticle>($"https://localhost:7126/api/NewsArticle/{id}");
+            var client = _httpClientFactory.CreateClient("MyApi");
+
+            var article = await client.GetFromJsonAsync<NewsArticle>($"api/NewsArticle/{id}");
             if (article == null)
             {
                 return NotFound();
@@ -29,7 +29,7 @@ namespace FUNewsManagementSystem.Pages.NewsArticles
             else
             {
                 NewsArticle = article;
-               NewsArticle.Category = await _httpClient.GetFromJsonAsync<Category>($"https://localhost:7126/api/Category/{NewsArticle.CategoryId}");
+                NewsArticle.Category = await client.GetFromJsonAsync<Category>($"api/Category/{NewsArticle.CategoryId}");
                 if (NewsArticle.Tags != null && NewsArticle.Tags.Count > 0)
                 {
                     foreach (var tag in NewsArticle.Tags)
@@ -40,11 +40,5 @@ namespace FUNewsManagementSystem.Pages.NewsArticles
             }
             return Page();
         }
-
-
-       
-
-
-      
     }
 }

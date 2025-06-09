@@ -7,11 +7,11 @@ namespace FUNewsManagementSystem.Pages.Reports
 {
     public class IndexModel : PageModel
     {
-        private readonly HttpClient _httpClient;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public IndexModel(HttpClient httpClient)
+        public IndexModel(IHttpClientFactory httpClientFactory)
         {
-            _httpClient = httpClient;
+            _httpClientFactory = httpClientFactory;
         }
 
         [BindProperty(SupportsGet = true)]
@@ -36,7 +36,9 @@ namespace FUNewsManagementSystem.Pages.Reports
 
         private async Task LoadDataAsync()
         {
-            var articles = await _httpClient.GetFromJsonAsync<List<NewsArticle>>("https://localhost:7126/api/NewsArticle")
+            var client = _httpClientFactory.CreateClient("MyApi");
+
+            var articles = await client.GetFromJsonAsync<List<NewsArticle>>("api/NewsArticle")
                ?? new List<NewsArticle>();
 
             if (StartDate.HasValue)
@@ -47,14 +49,14 @@ namespace FUNewsManagementSystem.Pages.Reports
             NewsArticles = articles.OrderByDescending(a => a.CreatedDate).ToList();
             CountArticles = NewsArticles.Count;
 
-            var categories = await _httpClient.GetFromJsonAsync<List<Category>>("https://localhost:7126/api/Category")
+            var categories = await client.GetFromJsonAsync<List<Category>>("api/Category")
                 ?? new List<Category>();
             CategoryStats = categories.ToDictionary(
                 c => c.CategoryName,
                 c => articles.Count(a => a.CategoryId == c.CategoryId)
             );
 
-            var staffList = await _httpClient.GetFromJsonAsync<List<SystemAccount>>("https://localhost:7126/api/SystemAccount")
+            var staffList = await client.GetFromJsonAsync<List<SystemAccount>>("api/SystemAccount")
                 ?? new List<SystemAccount>();
             StaffStats = staffList.ToDictionary(
                 s => s.AccountName,
@@ -62,5 +64,4 @@ namespace FUNewsManagementSystem.Pages.Reports
             );
         }
     }
-
 }

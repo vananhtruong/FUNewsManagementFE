@@ -6,25 +6,25 @@ namespace FUNewsManagementSystem.Pages.Tags
 {
     public class EditModel : PageModel
     {
-        private readonly HttpClient _httpClient;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public EditModel(HttpClient httpClient)
+        public EditModel(IHttpClientFactory httpClientFactory)
         {
-            _httpClient = httpClient;
+            _httpClientFactory = httpClientFactory;
         }
-
 
         [BindProperty]
         public Tag Tag { get; set; } = default!;
 
         public async Task<IActionResult> OnGetAsync(int id)
         {
-            if (id == null)
+            if (id == 0)
             {
                 return NotFound();
             }
 
-            var tag =  await _httpClient.GetFromJsonAsync<Tag>($"https://localhost:7126/api/Tag/{id}");
+            var client = _httpClientFactory.CreateClient("MyApi");
+            var tag = await client.GetFromJsonAsync<Tag>($"api/Tag/{id}");
             if (tag == null)
             {
                 return NotFound();
@@ -33,22 +33,17 @@ namespace FUNewsManagementSystem.Pages.Tags
             return Page();
         }
 
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more information, see https://aka.ms/RazorPagesCRUD.
         public async Task<IActionResult> OnPostAsync()
         {
-            
+            var client = _httpClientFactory.CreateClient("MyApi");
 
             if (ModelState.IsValid)
             {
-                await _httpClient.PutAsJsonAsync($"https://localhost:7126/api/Tag", Tag);
+                await client.PutAsJsonAsync("api/Tag", Tag);
                 return RedirectToPage("./Index");
             }
 
             return Page();
-     
         }
-
-     
     }
 }

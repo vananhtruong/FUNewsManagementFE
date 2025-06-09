@@ -5,20 +5,19 @@ namespace FUNewsManagementSystem.Pages.Tags
 {
     public class IndexModel : PageModel
     {
-        private readonly HttpClient _httpClient;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public IndexModel(HttpClient httpClient)
+        public IndexModel(IHttpClientFactory httpClientFactory)
         {
-            _httpClient = httpClient;
+            _httpClientFactory = httpClientFactory;
         }
 
         public IEnumerable<Tag> Tags { get; set; } = Enumerable.Empty<Tag>();
 
         public async Task OnGetAsync()
         {
-            Tags = await _httpClient.GetFromJsonAsync<List<Tag>>("https://localhost:7126/api/Tag");
-
-
+            var client = _httpClientFactory.CreateClient("MyApi");
+            Tags = await client.GetFromJsonAsync<List<Tag>>("api/Tag");
         }
     }
 }

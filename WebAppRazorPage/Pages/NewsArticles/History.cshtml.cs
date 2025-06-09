@@ -1,39 +1,33 @@
 using BusinessObject.Entities;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace WebAppRazorPage.Pages.NewsArticles
 {
     [Authorize(Policy = "StaffOnly")]
-
     public class HistoryModel : PageModel
     {
-        private readonly HttpClient _httpClient;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public HistoryModel(HttpClient httpClient)
+        public HistoryModel(IHttpClientFactory httpClientFactory)
         {
-            _httpClient = httpClient;
-
+            _httpClientFactory = httpClientFactory;
         }
 
-
         public IEnumerable<NewsArticle> NewsArticles { get; set; } = Enumerable.Empty<NewsArticle>();
-
 
         public async Task OnGetAsync()
         {
             var accountId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var client = _httpClientFactory.CreateClient("MyApi");
             if (!string.IsNullOrEmpty(accountId))
             {
-                NewsArticles = await _httpClient.GetFromJsonAsync<IEnumerable<NewsArticle>>($"https://localhost:7126/api/NewsArticle/staff/{accountId}");
+                NewsArticles = await client.GetFromJsonAsync<IEnumerable<NewsArticle>>($"api/NewsArticle/staff/{accountId}");
             }
             else
             {
                 NewsArticles = Enumerable.Empty<NewsArticle>();
             }
         }
-
     }
-
 }

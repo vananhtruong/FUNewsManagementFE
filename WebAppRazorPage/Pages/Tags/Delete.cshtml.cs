@@ -6,11 +6,11 @@ namespace FUNewsManagementSystem.Pages.Tags
 {
     public class DeleteModel : PageModel
     {
-        private readonly HttpClient _httpClient;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public DeleteModel(HttpClient httpClient)
+        public DeleteModel(IHttpClientFactory httpClientFactory)
         {
-            _httpClient = httpClient;
+            _httpClientFactory = httpClientFactory;
         }
 
         [BindProperty]
@@ -18,12 +18,13 @@ namespace FUNewsManagementSystem.Pages.Tags
 
         public async Task<IActionResult> OnGetAsync(int id)
         {
-            if (id == null)
+            if (id == 0)
             {
                 return NotFound();
             }
 
-            var tag = await _httpClient.GetFromJsonAsync<Tag>($"https://localhost:7126/api/Tag/{id}");
+            var client = _httpClientFactory.CreateClient("MyApi");
+            var tag = await client.GetFromJsonAsync<Tag>($"api/Tag/{id}");
 
             if (tag == null)
             {
@@ -38,10 +39,8 @@ namespace FUNewsManagementSystem.Pages.Tags
 
         public async Task<IActionResult> OnPostAsync(int id)
         {
-           
-                await _httpClient.DeleteAsync($"https://localhost:7126/api/Tag/{id}");
-
-
+            var client = _httpClientFactory.CreateClient("MyApi");
+            await client.DeleteAsync($"api/Tag/{id}");
             return RedirectToPage("./Index");
         }
     }

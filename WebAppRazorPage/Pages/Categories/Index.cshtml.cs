@@ -7,20 +7,19 @@ namespace FUNewsManagementSystem.Pages.Categories
     [Authorize(Policy = "StaffOnly")]
     public class IndexModel : PageModel
     {
-        private readonly HttpClient _httpClient;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public IndexModel(HttpClient httpClient)
+        public IndexModel(IHttpClientFactory httpClientFactory)
         {
-            _httpClient = httpClient;
+            _httpClientFactory = httpClientFactory;
         }
 
         public IEnumerable<Category> Category { get; set; } = Enumerable.Empty<Category>();
 
         public async Task OnGetAsync()
         {
-            Category = await _httpClient.GetFromJsonAsync<List<Category>>("https://localhost:7126/api/Category");
-
-
+            var client = _httpClientFactory.CreateClient("MyApi");
+            Category = await client.GetFromJsonAsync<List<Category>>("api/Category");
         }
     }
 }

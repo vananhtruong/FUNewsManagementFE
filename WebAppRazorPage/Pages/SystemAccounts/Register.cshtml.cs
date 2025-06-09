@@ -8,11 +8,11 @@ namespace FUNewsManagementSystem.Pages.SystemAccounts
 {
     public class RegisterModel : PageModel
     {
-        private readonly HttpClient _httpClient;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public RegisterModel(HttpClient httpClient)
+        public RegisterModel(IHttpClientFactory httpClientFactory)
         {
-            _httpClient = httpClient;
+            _httpClientFactory = httpClientFactory;
         }
 
         [BindProperty]
@@ -35,7 +35,8 @@ namespace FUNewsManagementSystem.Pages.SystemAccounts
 
             try
             {
-                var response = await _httpClient.PostAsJsonAsync("https://localhost:7126/api/SystemAccount", newAccount);
+                var client = _httpClientFactory.CreateClient("MyApi");
+                var response = await client.PostAsJsonAsync("api/SystemAccount", newAccount);
 
                 if (response.IsSuccessStatusCode)
                 {

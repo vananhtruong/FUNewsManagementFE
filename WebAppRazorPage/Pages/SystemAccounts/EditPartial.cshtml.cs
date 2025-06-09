@@ -9,19 +9,20 @@ namespace FUNewsManagementSystem.Pages.SystemAccounts
     [Authorize(Policy = "AdminOnly")]
     public class EditPartialModel : PageModel
     {
-        private readonly HttpClient _httpClient;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public EditPartialModel(HttpClient httpClient)
+        public EditPartialModel(IHttpClientFactory httpClientFactory)
         {
-            _httpClient = httpClient;
+            _httpClientFactory = httpClientFactory;
         }
+
         [BindProperty]
         public SystemAccount SystemAccount { get; set; } = default!;
 
         public async Task<IActionResult> OnGetAsync(short id)
         {
-
-            var systemaccount = await _httpClient.GetFromJsonAsync<SystemAccount>($"https://localhost:7126/api/SystemAccount/{id}");
+            var client = _httpClientFactory.CreateClient("MyApi");
+            var systemaccount = await client.GetFromJsonAsync<SystemAccount>($"api/SystemAccount/{id}");
             if (systemaccount == null)
             {
                 return NotFound();
@@ -35,10 +36,10 @@ namespace FUNewsManagementSystem.Pages.SystemAccounts
 
         public async Task<IActionResult> OnPostAsync()
         {
-
+            var client = _httpClientFactory.CreateClient("MyApi");
             if (ModelState.IsValid)
             {
-                await _httpClient.PutAsJsonAsync($"https://localhost:7126/api/SystemAccount",SystemAccount);
+                await client.PutAsJsonAsync("api/SystemAccount", SystemAccount);
                 return RedirectToPage("/SystemAccounts/Index");
             }
 

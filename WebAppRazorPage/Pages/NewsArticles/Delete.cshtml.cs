@@ -1,22 +1,21 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.SignalR;
 
 namespace FUNewsManagementSystem.Pages.NewsArticles
 {
     public class DeleteModel : PageModel
     {
-        private readonly HttpClient _httpClient;
-        public DeleteModel(HttpClient httpClient)
+        private readonly IHttpClientFactory _httpClientFactory;
+
+        public DeleteModel(IHttpClientFactory httpClientFactory)
         {
-            _httpClient = httpClient;
+            _httpClientFactory = httpClientFactory;
         }
-
-
 
         public async Task<IActionResult> OnPostAsync(string id)
         {
-            await _httpClient.DeleteAsync($"https://localhost:7126/api/NewsArticle/{id}");
+            var client = _httpClientFactory.CreateClient("MyApi");
+            await client.DeleteAsync($"api/NewsArticle/{id}");
             return RedirectToPage("/NewsArticles/Index");
         }
     }

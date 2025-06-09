@@ -1,18 +1,16 @@
 ﻿using BusinessObject.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.SignalR;
-
 
 namespace FUNewsManagementSystem.Pages.Tags
 {
     public class CreateModel : PageModel
     {
-        private readonly HttpClient _httpClient;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public CreateModel(HttpClient httpClient)
+        public CreateModel(IHttpClientFactory httpClientFactory)
         {
-            _httpClient = httpClient;
+            _httpClientFactory = httpClientFactory;
         }
 
         public IActionResult OnGet()
@@ -23,22 +21,22 @@ namespace FUNewsManagementSystem.Pages.Tags
         [BindProperty]
         public Tag Tag { get; set; } = default!;
 
-        // For more information, see https://aka.ms/RazorPagesCRUD.
         public async Task<IActionResult> OnPostAsync()
         {
             if (ModelState.IsValid)
             {
+                var client = _httpClientFactory.CreateClient("MyApi");
+
                 // Lấy TagId lớn nhất và +1
-                var maxId = (await _httpClient.GetFromJsonAsync<int?>("https://localhost:7126/api/Tag/MaxId")) ?? 0;
+                var maxId = (await client.GetFromJsonAsync<int?>("api/Tag/MaxId")) ?? 0;
                 Tag.TagId = maxId + 1;
 
-                await _httpClient.PostAsJsonAsync("https://localhost:7126/api/Tag", Tag);
+                await client.PostAsJsonAsync("api/Tag", Tag);
 
                 return RedirectToPage("./Index");
             }
 
             return Page();
-          
         }
     }
 }

@@ -6,19 +6,19 @@ namespace FUNewsManagementSystem.Pages.Categories
 {
     public class DetailsModel : PageModel
     {
-        private readonly HttpClient _httpClient;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public DetailsModel(HttpClient httpClient)
+        public DetailsModel(IHttpClientFactory httpClientFactory)
         {
-            _httpClient = httpClient;
+            _httpClientFactory = httpClientFactory;
         }
 
         public Category Category { get; set; } = default!;
 
         public async Task<IActionResult> OnGetAsync(short id)
         {
-           
-            var category = await _httpClient.GetFromJsonAsync<Category>($"https://localhost:7126/api/Category/{id}");
+            var client = _httpClientFactory.CreateClient("MyApi");
+            var category = await client.GetFromJsonAsync<Category>($"api/Category/{id}");
             if (category == null)
             {
                 return NotFound();

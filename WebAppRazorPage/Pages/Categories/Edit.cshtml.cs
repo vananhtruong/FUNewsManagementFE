@@ -7,14 +7,12 @@ namespace FUNewsManagementSystem.Pages.Categories
 {
     public class EditModel : PageModel
     {
-        private readonly HttpClient _httpClient;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public EditModel(HttpClient httpClient)
+        public EditModel(IHttpClientFactory httpClientFactory)
         {
-            _httpClient = httpClient;
+            _httpClientFactory = httpClientFactory;
         }
-
-
 
         [BindProperty]
         public Category Category { get; set; } = default!;
@@ -26,25 +24,24 @@ namespace FUNewsManagementSystem.Pages.Categories
                 return NotFound();
             }
 
-            var category =  await _httpClient.GetFromJsonAsync<Category>($"https://localhost:7126/api/Category/{id}");
+            var client = _httpClientFactory.CreateClient("MyApi");
+
+            var category = await client.GetFromJsonAsync<Category>($"api/Category/{id}");
             if (category == null)
             {
                 return NotFound();
             }
             Category = category;
-            var activeCategories = await _httpClient.GetFromJsonAsync<List<Category>>("https://localhost:7126/api/Category/active");
+            var activeCategories = await client.GetFromJsonAsync<List<Category>>("api/Category/active");
             ViewData["ParentCategoryId"] = new SelectList(activeCategories, "CategoryId", "CategoryName");
             return Page();
         }
 
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more information, see https://aka.ms/RazorPagesCRUD.
         public async Task<IActionResult> OnPostAsync()
         {
-            await _httpClient.PutAsJsonAsync("https://localhost:7126/api/Category", Category);
+            var client = _httpClientFactory.CreateClient("MyApi");
+            await client.PutAsJsonAsync("api/Category", Category);
             return RedirectToPage("./Index");
         }
-
-       
     }
 }

@@ -7,15 +7,17 @@ namespace FUNewsManagementSystem.Pages.SystemAccounts
     [Authorize(Policy = "AdminOnly")]
     public class DeleteModel : PageModel
     {
-        private readonly HttpClient _httpClient;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public DeleteModel(HttpClient httpClient)
+        public DeleteModel(IHttpClientFactory httpClientFactory)
         {
-            _httpClient = httpClient;
+            _httpClientFactory = httpClientFactory;
         }
+
         public async Task<IActionResult> OnPostAsync(short id)
         {
-            var response = await _httpClient.DeleteAsync($"https://localhost:7126/api/SystemAccount/{id}");
+            var client = _httpClientFactory.CreateClient("MyApi");
+            var response = await client.DeleteAsync($"api/SystemAccount/{id}");
             if (response.IsSuccessStatusCode)
             {
                 return RedirectToPage("/SystemAccounts/Index");

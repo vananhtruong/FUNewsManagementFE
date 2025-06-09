@@ -7,17 +7,19 @@ namespace FUNewsManagementSystem.Pages.NewsArticles
 {
     public class LecturerNewDetailsModel : PageModel
     {
-        private readonly HttpClient _httpClient;
-        public LecturerNewDetailsModel(HttpClient httpClient)
+        private readonly IHttpClientFactory _httpClientFactory;
+
+        public LecturerNewDetailsModel(IHttpClientFactory httpClientFactory)
         {
-            _httpClient = httpClient;
+            _httpClientFactory = httpClientFactory;
         }
 
         public NewsArticle NewsArticle { get; set; } = default!;
 
         public async Task<IActionResult> OnGetAsync(string id)
         {
-            var article = await _httpClient.GetFromJsonAsync<NewsArticle>($"https://localhost:7126/api/NewsArticle/{id}");
+            var client = _httpClientFactory.CreateClient("MyApi");
+            var article = await client.GetFromJsonAsync<NewsArticle>($"api/NewsArticle/{id}");
             if (article == null)
             {
                 return NotFound();
@@ -28,6 +30,5 @@ namespace FUNewsManagementSystem.Pages.NewsArticles
             }
             return Page();
         }
-
     }
 }

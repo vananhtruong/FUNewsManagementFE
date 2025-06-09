@@ -8,14 +8,14 @@ namespace FUNewsManagementSystem.Pages.SystemAccounts
     [Authorize(Policy = "AdminOnly")]
     public class CreatePartialModel : PageModel
     {
-        private readonly HttpClient _httpClient;
+        private readonly IHttpClientFactory _httpClientFactory;
 
         [BindProperty]
         public SystemAccount SystemAccount { get; set; } = new();
 
-        public CreatePartialModel(HttpClient httpClient)
+        public CreatePartialModel(IHttpClientFactory httpClientFactory)
         {
-            _httpClient = httpClient;
+            _httpClientFactory = httpClientFactory;
         }
 
         public void OnGet()
@@ -24,7 +24,9 @@ namespace FUNewsManagementSystem.Pages.SystemAccounts
 
         public async Task<IActionResult> OnPostAsync()
         {
-            var existingAccounts = await _httpClient.PostAsJsonAsync("https://localhost:7126/api/SystemAccount/Any", SystemAccount);
+            var client = _httpClientFactory.CreateClient("MyApi");
+
+            var existingAccounts = await client.PostAsJsonAsync("api/SystemAccount/Any", SystemAccount);
 
             if (existingAccounts.IsSuccessStatusCode)
             {
@@ -32,7 +34,7 @@ namespace FUNewsManagementSystem.Pages.SystemAccounts
                 return RedirectToPage("./Index");
             }
 
-            await _httpClient.PostAsJsonAsync("https://localhost:7126/api/SystemAccount", SystemAccount);
+            await client.PostAsJsonAsync("api/SystemAccount", SystemAccount);
             return RedirectToPage("./Index");
         }
     }
