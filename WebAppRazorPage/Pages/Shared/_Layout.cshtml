@@ -3,72 +3,126 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - FUNews Management</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <style>
+        .navbar-brand span {
+            color: #0d6efd;
+            letter-spacing: 2px;
+        }
 
+        .navbar .nav-link.active, .navbar .nav-link:focus, .navbar .nav-link:hover {
+            color: #0d6efd !important;
+        }
+
+        .navbar .nav-link {
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .user-greeting {
+            font-weight: 500;
+            color: #198754 !important;
+        }
+    </style>
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
+        <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm border-bottom">
             <div class="container-fluid">
-                <a class="navbar-brand fw-bold" asp-controller="Home" asp-action="Index">FUNews Management </a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav"
-                        aria-expanded="false" aria-label="Toggle navigation">
+                <a class="navbar-brand fw-bold d-flex align-items-center" asp-controller="Home" asp-action="Index">
+                    <i class="bi bi-newspaper me-2 text-primary" style="font-size: 1.6rem;"></i>
+                    <span>FUNews Management</span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="collapse navbar-collapse" id="navbarNav">
-                    <ul class="navbar-nav me-auto">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
 
                         @if (User.Identity.IsAuthenticated)
                         {
                             @if (User.IsInRole("Admin"))
                             {
-                                <li class="nav-item"><a class="nav-link" asp-page="/SystemAccounts/Index">Manage Accounts</a></li>
-                                <li class="nav-item"><a class="nav-link" asp-page="/Reports/Index">Reports</a></li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-page="/SystemAccounts/Index">
+                                        <i class="bi bi-people"></i> Manage Accounts
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-page="/Reports/Index">
+                                        <i class="bi bi-bar-chart"></i> Reports
+                                    </a>
+                                </li>
                             }
                             @if (User.IsInRole("Staff"))
                             {
-                                <li class="nav-item"><a class="nav-link" asp-page="/NewsArticles/Index" >Manage News</a></li>
-                                <li class="nav-item"><a class="nav-link" asp-page="/Categories/Index">Manage Category</a></li>
-                                <li class="nav-item"><a class="nav-link" asp-page="/Tags/Index">Manage Tag</a></li>
-                                <li class="nav-item"><a class="nav-link" asp-page="/NewsArticles/History">View History</a></li>
-
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-page="/NewsArticles/Index">
+                                        <i class="bi bi-file-earmark-text"></i> Manage News
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-page="/Categories/Index">
+                                        <i class="bi bi-collection"></i> Manage Category
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-page="/Tags/Index">
+                                        <i class="bi bi-tags"></i> Manage Tag
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-page="/NewsArticles/History">
+                                        <i class="bi bi-clock-history"></i> View History
+                                    </a>
+                                </li>
                             }
                             @if (User.IsInRole("Lecturer"))
                             {
-                                <li class="nav-item"><a class="nav-link" asp-page="/NewsArticles/LecturerNews">View News</a></li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-page="/NewsArticles/LecturerNews">
+                                        <i class="bi bi-journal-richtext"></i> View News
+                                    </a>
+                                </li>
                             }
                         }
                     </ul>
 
-                    <ul class="navbar-nav">
+                    <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
                         @if (User.Identity.IsAuthenticated)
                         {
-                            <li class="nav-item d-flex align-items-center me-3">
+                            <li class="nav-item d-flex align-items-center me-2">
                                 @if (User.IsInRole("Staff"))
                                 {
-                                    <a class="nav-link text-dark" asp-page="/SystemAccounts/EditProfile" >
-                                        Hello, @User.Identity.Name
+                                    <a class="nav-link user-greeting" asp-page="/SystemAccounts/EditProfile">
+                                        <i class="bi bi-person-circle me-1"></i> Hello, @User.Identity.Name
                                     </a>
                                 }
                                 else
                                 {
-                                    <span class="nav-link text-secondary" >
-                                        Hello, @User.Identity.Name
+                                    <span class="nav-link user-greeting">
+                                        <i class="bi bi-person-circle me-1"></i> Hello, @User.Identity.Name
                                     </span>
                                 }
                             </li>
                             <li class="nav-item">
                                 <form asp-page="/SystemAccounts/Logout" method="post" class="d-inline">
-                                    <button type="submit" class="btn btn-outline-danger btn-sm">Logout</button>
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                                        <i class="bi bi-box-arrow-right"></i> Logout
+                                    </button>
                                 </form>
                             </li>
                         }
                         else
                         {
                             <li class="nav-item">
-                                <a class="btn btn-primary btn-sm" asp-controller="SystemAccounts" asp-action="Login">Login</a>
+                                <a class="btn btn-primary btn-sm" asp-page="/SystemAccounts/Login">
+                                    <i class="bi bi-box-arrow-in-right"></i> Login
+                                </a>
                             </li>
                         }
                     </ul>
@@ -82,8 +136,6 @@
             @RenderBody()
         </main>
     </div>
-
-
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
