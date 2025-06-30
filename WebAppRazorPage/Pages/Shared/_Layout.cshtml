@@ -112,6 +112,12 @@
                     const categories = await res.json();
                     const parents = categories.filter(c => c.parentCategoryId === null);
                     const children = categories.filter(c => c.parentCategoryId !== null);
+                    navHtml += `
+                        <li class="nav-item">
+                            <a class="nav-link" href="/NewsArticles/LecturerNews">
+                                <i class="bi bi-journal-text"></i> All News
+                            </a>
+                        </li>`;
 
                     parents.forEach(parent => {
                         const subs = children.filter(c => c.parentCategoryId === parent.categoryId);

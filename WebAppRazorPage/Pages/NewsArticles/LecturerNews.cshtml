@@ -40,7 +40,8 @@
         let allArticles = [];
         let pageSize = 6;
         let currentPage = 1;
-
+        const urlParams = new URLSearchParams(window.location.search);
+        const selectedCategoryId = parseInt(urlParams.get("categoryId"));
         document.addEventListener("DOMContentLoaded", async () => {
             const token = localStorage.getItem("jwtToken");
             if (!token) {
@@ -88,12 +89,13 @@
         function renderArticles() {
             const keyword = document.getElementById("searchInput").value.trim().toLowerCase();
             console.log("Search keyword:", keyword);
+            console.log("Category of first article:", allArticles[0]?.Category);
 
-            const filtered = allArticles.filter(a => {
-                const title = a.NewsTitle ? a.NewsTitle.toLowerCase() : "";
-                const content = a.NewsContent ? a.NewsContent.toLowerCase() : "";
-                return title.includes(keyword) || content.includes(keyword);
-            });
+        const filtered = allArticles.filter(a => {
+            const matchKeyword = a.NewsTitle?.toLowerCase().includes(keyword) || a.NewsContent?.toLowerCase().includes(keyword);
+            const matchCategory = !selectedCategoryId || a.Category?.CategoryId == selectedCategoryId;
+            return matchKeyword && matchCategory;
+        });
 
             console.log("Filtered articles:", filtered);
 
