@@ -13,20 +13,15 @@
                     <h3 class="mb-0">➕ Create New Tag</h3>
                 </div>
                 <div class="card-body">
-                    <form method="post">
-                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-
-
+                    <form id="createTagForm">
                         <div class="mb-3">
-                            <label asp-for="Tag.TagName" class="form-label fw-bold">Tag Name</label>
-                            <input asp-for="Tag.TagName" class="form-control" />
-                            <span asp-validation-for="Tag.TagName" class="text-danger"></span>
+                            <label for="tagName" class="form-label fw-bold">Tag Name</label>
+                            <input type="text" id="tagName" name="tagName" class="form-control" required />
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="Tag.Note" class="form-label fw-bold">Note</label>
-                            <input asp-for="Tag.Note" class="form-control" />
-                            <span asp-validation-for="Tag.Note" class="text-danger"></span>
+                            <label for="note" class="form-label fw-bold">Note</label>
+                            <input type="text" id="note" name="note" class="form-control" />
                         </div>
 
                         <div class="d-grid">
@@ -37,14 +32,57 @@
             </div>
 
             <div class="text-center mt-3">
-                <a asp-page="/Tags/Index" class="btn btn-outline-secondary">⬅️ Back to List</a>
+                <a href="/Tags/Index" class="btn btn-outline-secondary">⬅️ Back to List</a>
             </div>
         </div>
     </div>
 </div>
 
-@section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
-}
+<script>
+    document.getElementById("createTagForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const token = localStorage.getItem("jwtToken");
+
+        const tagName = document.getElementById("tagName").value.trim();
+        const note = document.getElementById("note").value.trim();
+
+        if (!tagName) {
+            alert("❌ Tag Name is required.");
+            return;
+        }
+
+        try {
+            // Lấy TagId mới từ API
+            const maxIdRes = await fetch("https://localhost:7126/api/Tag/MaxId", {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const maxId = await maxIdRes.json();
+
+            const tag = {
+                tagId: maxId + 1,
+                tagName: tagName,
+                note: note
+            };
+
+            const res = await fetch("https://localhost:7126/api/Tag", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(tag)
+            });
+
+            if (res.ok) {
+                window.location.href = "/Tags/Index";
+            } else {
+                const err = await res.text();
+                alert("❌ Failed to create tag: " + err);
+            }
+        } catch (err) {
+            alert("❌ Error occurred while creating tag.");
+            console.error(err);
+        }
+    });
+</script>

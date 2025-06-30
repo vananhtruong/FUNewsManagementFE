@@ -17,11 +17,11 @@
                         <tbody>
                             <tr>
                                 <th class="text-end w-25">📛 Tag Name:</th>
-                                <td>@Model.Tag.TagName</td>
+                                <td id="tagName"></td>
                             </tr>
                             <tr>
                                 <th class="text-end">📝 Note:</th>
-                                <td>@Model.Tag.Note</td>
+                                <td id="tagNote"></td>
                             </tr>
                         </tbody>
                     </table>
@@ -29,9 +29,34 @@
             </div>
 
             <div class="d-flex justify-content-between mt-3">
-                <a asp-page="./Edit" asp-route-id="@Model.Tag.TagId" class="btn btn-warning">✏️ Edit</a>
-                <a asp-page="./Index" class="btn btn-outline-secondary">⬅️ Back to List</a>
+                <a id="editLink" class="btn btn-warning">✏️ Edit</a>
+                <a href="/Tags/Index" class="btn btn-outline-secondary">⬅️ Back to List</a>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+    const token = localStorage.getItem("jwtToken");
+    const urlParams = new URLSearchParams(window.location.search);
+    const tagId = urlParams.get("id");
+
+    fetch(`https://localhost:7126/api/Tag/${tagId}`, {
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    })
+    .then(res => {
+        if (!res.ok) throw new Error("Tag not found");
+        return res.json();
+    })
+    .then(tag => {
+        document.getElementById("tagName").textContent = tag.tagName;
+        document.getElementById("tagNote").textContent = tag.note;
+        document.getElementById("editLink").href = `/Tags/Edit?id=${tag.tagId}`;
+    })
+    .catch(err => {
+        alert("❌ Failed to load tag details.");
+        console.error(err);
+    });
+</script>
