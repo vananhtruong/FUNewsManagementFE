@@ -1,0 +1,124 @@
+﻿@page
+@{
+    ViewData["Title"] = "Create News Article";
+}
+
+<h2 class="text-primary mb-4">🆕 @ViewData["Title"]</h2>
+
+<form id="createForm">
+    <div class="mb-3">
+        <label class="form-label">📝 Title</label>
+        <input type="text" class="form-control" name="newsTitle" required />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">📰 Headline</label>
+        <input type="text" class="form-control" name="headline" required />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">📄 Content</label>
+        <textarea class="form-control" name="newsContent" required></textarea>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">🔗 Source</label>
+        <input type="text" class="form-control" name="newsSource" required />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">📂 Category</label>
+        <select class="form-select" name="categoryId" id="categorySelect" required></select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">📌 Status</label>
+        <select class="form-select" name="newsStatus" required>
+            <option value="true">✅ Active</option>
+            <option value="false">⛔ Inactive</option>
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">🏷️ Tags</label>
+        <div id="tagsContainer"></div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2">
+        <a href="/NewsArticles/Index" class="btn btn-secondary">❌ Cancel</a>
+        <button type="submit" class="btn btn-primary">✅ Create</button>
+    </div>
+</form>
+
+<script>
+    const token = localStorage.getItem("jwtToken");
+
+    async function loadDropdowns() {
+        const categoryRes = await fetch("https://localhost:7126/api/Category/active", {
+            headers: { "Authorization": "Bearer " + token }
+        });
+        const categories = await categoryRes.json();
+        const select = document.getElementById("categorySelect");
+        categories.forEach(cat => {
+            const opt = document.createElement("option");
+            opt.value = cat.categoryId;
+            opt.textContent = cat.categoryName;
+            select.appendChild(opt);
+        });
+
+        const tagRes = await fetch("https://localhost:7126/api/Tag", {
+            headers: { "Authorization": "Bearer " + token }
+        });
+        const tags = await tagRes.json();
+        const container = document.getElementById("tagsContainer");
+        tags.forEach(tag => {
+            container.innerHTML += `
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="tagIds" value="${tag.tagId}" id="tag${tag.tagId}">
+                    <label class="form-check-label" for="tag${tag.tagId}">${tag.tagName}</label>
+                </div>`;
+        });
+    }
+
+    document.getElementById("createForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const form = e.target;
+        const formData = new FormData(form);
+
+        const tagIds = formData.getAll("tagIds").map(id => parseInt(id));
+        const payload = {
+            newsArticle: {
+                newsArticleId: crypto.randomUUID().replace(/-/g, "").substring(0, 20),
+                newsTitle: formData.get("newsTitle"),
+                headline: formData.get("headline"),
+                newsContent: formData.get("newsContent"),
+                newsSource: formData.get("newsSource"),
+                categoryId: parseInt(formData.get("categoryId")),
+                newsStatus: formData.get("newsStatus") === "true",
+                createdDate: new Date().toISOString(),
+                modifiedDate: new Date().toISOString()
+            },
+            tagIds: tagIds
+        };
+
+        const res = await fetch("https://localhost:7126/api/NewsArticle", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + token
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            alert("✅ Created successfully!");
+            window.location.href = "/NewsArticles/Index";
+        } else {
+            const err = await res.text();
+            alert("❌ Failed: " + err);
+        }
+    });
+
+    loadDropdowns();
+</script>

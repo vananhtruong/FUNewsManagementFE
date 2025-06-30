@@ -4,7 +4,6 @@ using WebAppRazorPage.Model;
 
 namespace FUNewsManagementSystem.Pages.SystemAccounts
 {
-    [Authorize(Policy = "AdminOnly")]
     public class IndexModel : PageModel
     {
         private readonly IHttpClientFactory _httpClientFactory;

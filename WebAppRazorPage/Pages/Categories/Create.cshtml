@@ -10,38 +10,36 @@
 
     <div class="card shadow-sm border-0 mt-3">
         <div class="card-body">
-            <form method="post">
-                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-
+            <form id="createCategoryForm">
                 <div class="mb-2">
-                    <label asp-for="Category.CategoryName" class="form-label">Category Name</label>
-                    <input asp-for="Category.CategoryName" class="form-control" required />
-                    <span asp-validation-for="Category.CategoryName" class="text-danger"></span>
+                    <label for="CategoryName" class="form-label">Category Name</label>
+                    <input id="CategoryName" name="CategoryName" class="form-control" required />
+                    <div class="invalid-feedback" id="nameError"></div>
                 </div>
 
                 <div class="mb-2">
-                    <label asp-for="Category.CategoryDesciption" class="form-label">Description</label>
-                    <textarea asp-for="Category.CategoryDesciption" class="form-control" rows="2" required></textarea>
-                    <span asp-validation-for="Category.CategoryDesciption" class="text-danger"></span>
+                    <label for="CategoryDesciption" class="form-label">Description</label>
+                    <textarea id="CategoryDesciption" name="CategoryDesciption" class="form-control" rows="2" required></textarea>
+                    <div class="invalid-feedback" id="descError"></div>
                 </div>
 
                 <div class="mb-2">
-                    <label asp-for="Category.ParentCategoryId" class="form-label">Parent Category</label>
-                    <select asp-for="Category.ParentCategoryId" class="form-select" asp-items="ViewBag.ParentCategoryId">
+                    <label for="ParentCategoryId" class="form-label">Parent Category</label>
+                    <select id="ParentCategoryId" name="ParentCategoryId" class="form-select">
                         <option value="">-- Select --</option>
                     </select>
                 </div>
 
                 <div class="mb-3">
-                    <label asp-for="Category.IsActive" class="form-label">Status</label>
-                    <select asp-for="Category.IsActive" class="form-select">
+                    <label for="IsActive" class="form-label">Status</label>
+                    <select id="IsActive" name="IsActive" class="form-select">
                         <option value="true">Active</option>
                         <option value="false">Inactive</option>
                     </select>
                 </div>
 
                 <div class="d-flex justify-content-between">
-                    <a asp-page="Index" class="btn btn-outline-secondary">Back</a>
+                    <a href="/Categories/Index" class="btn btn-outline-secondary">Back</a>
                     <button type="submit" class="btn btn-primary">Create</button>
                 </div>
             </form>
@@ -49,8 +47,55 @@
     </div>
 </div>
 
-@section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
-}
+<script>
+    const token = localStorage.getItem("jwtToken");
+    const apiUrl = "https://localhost:7126/api/Category";
+
+    // Load Parent Categories
+    fetch(apiUrl + "/active", {
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        const select = document.getElementById("ParentCategoryId");
+        data.forEach(cat => {
+            const option = document.createElement("option");
+            option.value = cat.categoryId;
+            option.textContent = cat.categoryName;
+            select.appendChild(option);
+        });
+    });
+
+    // Handle Submit
+    document.getElementById("createCategoryForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const data = {
+            categoryName: document.getElementById("CategoryName").value,
+            categoryDesciption: document.getElementById("CategoryDesciption").value,
+            parentCategoryId: document.getElementById("ParentCategoryId").value || null,
+            isActive: document.getElementById("IsActive").value === "true"
+        };
+
+        fetch(apiUrl, {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(data)
+        })
+        .then(res => {
+            if (res.ok) {
+                window.location.href = "/Categories/Index";
+            } else {
+                return res.json().then(err => {
+                    alert("❌ Failed: " + JSON.stringify(err.errors || err));
+                });
+            }
+        })
+        .catch(err => alert("❌ Error: " + err));
+    });
+</script>

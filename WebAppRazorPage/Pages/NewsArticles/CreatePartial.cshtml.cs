@@ -26,7 +26,6 @@ namespace FUNewsManagementSystem.Pages.NewsArticles
             _httpClientFactory = httpClientFactory;
         }
 
-        [Authorize(Policy = "StaffOnly")]
         public async Task<IActionResult> OnGetAsync()
         {
             var client = _httpClientFactory.CreateClient("MyApi");

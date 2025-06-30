@@ -1,4 +1,19 @@
 ﻿@page
 @model FUNewsManagementSystem.Pages.SystemAccounts.LogoutModel
 @{
+    Layout = null;
 }
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="refresh" content="1;url=/SystemAccounts/Login" />
+</head>
+<body>
+    <script>
+        localStorage.removeItem("jwtToken");
+        // Optional: clear other data like user info
+    </script>
+    <p>Logging out...</p>
+</body>
+</html>

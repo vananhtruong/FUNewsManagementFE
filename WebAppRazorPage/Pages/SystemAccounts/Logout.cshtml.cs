@@ -8,10 +8,9 @@ namespace FUNewsManagementSystem.Pages.SystemAccounts
 {
     public class LogoutModel : PageModel
     {
-        public async Task<IActionResult> OnPostAsync()
+        public void OnGet()
         {
-            await HttpContext.SignOutAsync("MyCookieAuth");
-            return RedirectToPage("/SystemAccounts/Login"); 
         }
+        public void OnPost() { }
     }
 }

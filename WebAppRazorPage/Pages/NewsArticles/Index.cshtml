@@ -1,6 +1,5 @@
 ﻿@page
 @model FUNewsManagementSystem.Pages.NewsArticles.IndexModel
-
 @{
     ViewData["Title"] = "News Management";
 }
@@ -14,20 +13,15 @@
 </head>
 <body class="bg-light">
     <div class="container py-5">
-     
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1 class="fw-bold text-primary">@ViewData["Title"]</h1>
+            <a href="/NewsArticles/Create" class="btn btn-success">➕ Create New Article</a>
         </div>
 
-      
-        <div class="mb-4">
-            <button id="openCreateNewsModal" class="btn btn-success shadow-sm">➕ Create New Article</button>
+        <div class="input-group mb-3">
+            <input type="text" id="searchInput" class="form-control" placeholder="Search by title...">
+            <button id="btnSearch" class="btn btn-outline-primary">🔍</button>
         </div>
-
-        <form method="get">
-            <input type="text" name="searchString" placeholder="Search articles..." value="@Request.Query["searchString"]" />
-            <button type="submit">Search</button>
-        </form>
 
         <div class="table-responsive shadow-sm rounded bg-white p-3">
             <table class="table table-hover align-middle">
@@ -35,195 +29,84 @@
                     <tr>
                         <th>📜 Title</th>
                         <th>📰 Headline</th>
-                        <th style="width: 30%;">📖 Content</th> <!-- Thu nhỏ cột Content -->
-                        <th> Source</th>
+                        <th>📖 Content</th>
+                        <th>Source</th>
                         <th>Status</th>
-                     
                         <th class="text-center">⚡ Action</th>
                     </tr>
                 </thead>
-                <tbody>
-                    @foreach (var item in Model.NewsArticles)
-                    {
-                        <tr>
-                            <td>@item.NewsTitle</td>
-                            <td>@item.Headline</td>
-                            <td>
-                                <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 300px;"
-                                     title="@item.NewsContent">
-                                    @item.NewsContent
-                                </div>
-                            </td>
-                            <td>@item.NewsSource</td>
-                            <td>
-                                <span class="badge bg-@(item.NewsStatus ? "success" : "secondary")">
-                                    @(item.NewsStatus ? "Active" : "Inactive")
-                                </span>
-                            </td>
-                           
-                            <td class="text-center">
-                                <div class="d-flex justify-content-center gap-2">
-                                    <a asp-page="Details" asp-route-id="@item.NewsArticleId"
-                                       class="btn btn-sm btn-outline-primary">👁️ Details</a>
-                                    <a href="javascript:void(0);" class="btn btn-sm btn-warning edit-news-btn"
-                                       data-id="@item.NewsArticleId">✏️ Edit</a>
-                                    <a href="javascript:void(0);" class="btn btn-sm btn-danger delete-news-btn"
-                                       data-id="@item.NewsArticleId" data-title="@item.NewsTitle">🗑️ Delete</a>
-                                </div>
-                            </td>
-                        </tr>
-                    }
+                <tbody id="newsTableBody">
+                    <!-- Render bằng JavaScript -->
                 </tbody>
             </table>
         </div>
 
-    </div>
-
-
-    <div class="modal fade" id="createNewsModal" tabindex="-1" aria-labelledby="createNewsModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title" id="createNewsModalLabel">✨ Create New Article</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body" id="createNewsModalContent"></div>
-            </div>
-        </div>
-    </div>
-
-
-    <div class="modal fade" id="editNewsModal" tabindex="-1" aria-labelledby="editNewsModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header bg-warning text-white">
-                    <h5 class="modal-title" id="editNewsModalLabel">📝 Edit Article</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body" id="editNewsModalContent"></div>
-            </div>
-        </div>
-    </div>
-
-   
-    <div class="modal fade" id="deleteNewsModal" tabindex="-1" aria-labelledby="deleteNewsModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title" id="deleteNewsModalLabel">🗑️ Confirm Delete</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body" id="deleteNewsModalContent">
-                    @Html.AntiForgeryToken()
-                    <p>⚠️ Are you sure you want to delete <strong id="deleteNewsTitle"></strong>?</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">❌ Cancel</button>
-                    <button type="button" id="confirmDeleteNewsBtn" class="btn btn-danger">🗑️ Confirm Delete</button>
-                </div>
-            </div>
+        <div id="errorBox" class="alert alert-danger d-none mt-3 text-center">
+            ❌ Failed to load articles.
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
-  
     <script>
-        document.getElementById('openCreateNewsModal').addEventListener('click', function () {
-            fetch('/NewsArticles/CreatePartial')
-                .then(response => response.text())
-                .then(html => {
-                    document.getElementById('createNewsModalContent').innerHTML = html;
-                    const createModal = new bootstrap.Modal(document.getElementById('createNewsModal'));
-                    createModal.show();
+        const apiUrl = "https://localhost:7126/api/NewsArticle";
+        const token = localStorage.getItem("jwtToken");
 
-                    document.getElementById('createNewsArticleForm').addEventListener('submit', function (e) {
-                        e.preventDefault();
-                        const form = this;
-                        const formData = new URLSearchParams(new FormData(form)).toString();
-                        const token = form.querySelector('input[name="__RequestVerificationToken"]').value;
+        function loadArticles(keyword = "") {
+            fetch(apiUrl, {
+                headers: { "Authorization": "Bearer " + token }
+            })
+            .then(res => {
+                if (!res.ok) throw new Error("Failed to fetch");
+                return res.json();
+            })
+            .then(data => {
+                const filtered = keyword
+                    ? data.filter(a => a.newsTitle.toLowerCase().includes(keyword.toLowerCase()))
+                    : data;
 
-                        fetch('/NewsArticles/CreatePartial', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/x-www-form-urlencoded',
-                                'RequestVerificationToken': token
-                            },
-                            body: formData
-                        })
-                            .then(response => response.redirected ? window.location.href = response.url : response.text())
-                            .then(data => { if (data) document.getElementById('createNewsModalContent').innerHTML = data; })
-                            .catch(() => alert('⚡ Có lỗi xảy ra khi gửi form.'));
-                    });
-                });
+                const tbody = document.getElementById("newsTableBody");
+                tbody.innerHTML = "";
 
-
-        });
-    </script>
-    
-
- 
-    <script>
-       document.addEventListener('click', function (e) {
-    if (e.target && e.target.classList.contains('edit-news-btn')) {
-        const NewsArticleId = e.target.getAttribute('data-id');
-        fetch(`/NewsArticles/EditPartial?id=${NewsArticleId}`)
-            .then(response => response.text())
-            .then(html => {
-                document.getElementById('editNewsModalContent').innerHTML = html;
-                const modal = new bootstrap.Modal(document.getElementById('editNewsModal'));
-                modal.show();
-
-              
-                document.getElementById('editNewsArticleForm').addEventListener('submit', function (e) {
-                    e.preventDefault();
-                    const form = this;
-                    const formData = new URLSearchParams(new FormData(form)).toString();
-                    const token = form.querySelector('input[name="__RequestVerificationToken"]').value;
-
-                    fetch('/NewsArticles/EditPartial', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                            'RequestVerificationToken': token
-                        },
-                        body: formData
-                    })
-                    .then(response => response.redirected ? window.location.href = response.url : response.text())
-                    .then(data => { 
-                        if (data) document.getElementById('editNewsModalContent').innerHTML = data; 
-                    })
-                    .catch(() => alert('⚡ Có lỗi xảy ra khi cập nhật bài viết.'));
+                filtered.forEach(a => {
+                    const row = `
+                        <tr>
+                            <td>${a.newsTitle}</td>
+                            <td>${a.headline}</td>
+                            <td style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${a.newsContent}">
+                                ${a.newsContent}
+                            </td>
+                            <td>${a.newsSource}</td>
+                            <td>
+                                <span class="badge bg-${a.newsStatus ? 'success' : 'secondary'}">
+                                    ${a.newsStatus ? 'Active' : 'Inactive'}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <a href="/NewsArticles/Details?id=${a.newsArticleId}" class="btn btn-sm btn-outline-primary">👁️</a>
+                                <a href="/NewsArticles/Edit?id=${a.newsArticleId}" class="btn btn-sm btn-warning">✏️</a>
+                                <a href="/NewsArticles/Delete?id=${a.newsArticleId}" class="btn btn-sm btn-danger">🗑️</a>
+                            </td>
+                        </tr>`;
+                    tbody.insertAdjacentHTML("beforeend", row);
                 });
             })
-            .catch(() => alert('⚡ Không thể tải dữ liệu chỉnh sửa.'));
-    }
-});
+            .catch(() => {
+                document.getElementById("errorBox").classList.remove("d-none");
+            });
+        }
 
-    </script>
+        document.getElementById("btnSearch").addEventListener("click", () => {
+            const keyword = document.getElementById("searchInput").value;
+            loadArticles(keyword);
+        });
 
-
-    <script>
-        let deleteNewsId;
-        document.addEventListener('click', function (e) {
-            if (e.target && e.target.classList.contains('delete-news-btn')) {
-                deleteNewsId = e.target.getAttribute('data-id');
-                const newsTitle = e.target.getAttribute('data-title');
-                document.getElementById('deleteNewsTitle').textContent = newsTitle;
-                new bootstrap.Modal(document.getElementById('deleteNewsModal')).show();
+        document.addEventListener("DOMContentLoaded", () => {
+            if (!token) {
+                window.location.href = "/SystemAccounts/Login";
+            } else {
+                loadArticles();
             }
-        });
-        document.getElementById('confirmDeleteNewsBtn').addEventListener('click', function () {
-            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
-            fetch(`/NewsArticles/Delete?id=${deleteNewsId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `__RequestVerificationToken=${token}`
-            })
-                .then(response => response.redirected ? window.location.href = response.url : alert('❌ Delete failed.'));
         });
     </script>
 </body>
 </html>
-<script src="~/js/microsoft/signalr/dist/browser/signalr.js"></script>
-<script src="~/js/site.js"></script>

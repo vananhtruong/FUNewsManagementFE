@@ -1,0 +1,148 @@
+﻿@page
+@model WebAppRazorPage.Pages.NewsArticles.EditModel
+@{
+    ViewData["Title"] = "Edit News Article";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewData["Title"]</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body class="bg-light">
+    <div class="container py-5">
+        <h2 class="mb-4 text-primary">📝 Edit News Article</h2>
+
+        <form id="editForm">
+            <input type="hidden" id="newsArticleId" value="" />
+
+            <div class="mb-3">
+                <label class="form-label">News Title</label>
+                <input class="form-control" id="newsTitle" required />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Headline</label>
+                <input class="form-control" id="headline" required />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Content</label>
+                <textarea class="form-control" id="newsContent" rows="5" required></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Source</label>
+                <input class="form-control" id="newsSource" required />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Category</label>
+                <select class="form-select" id="categoryId" required></select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Status</label>
+                <select class="form-select" id="newsStatus">
+                    <option value="true">✅ Active</option>
+                    <option value="false">⛔ Inactive</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Tags</label>
+                <div id="tagList" class="row row-cols-2 g-2"></div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">✅ Save Changes</button>
+            <a href="/NewsArticles/Index" class="btn btn-secondary">Back</a>
+        </form>
+    </div>
+
+    <script>
+        const articleId = new URLSearchParams(window.location.search).get("id");
+        const apiBase = "https://localhost:7126/api";
+        const token = localStorage.getItem("jwtToken");
+
+        async function loadData() {
+            const article = await fetch(`${apiBase}/NewsArticle/${articleId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            }).then(res => res.json());
+
+            const categories = await fetch(`${apiBase}/Category/active`, {
+                headers: { Authorization: `Bearer ${token}` }
+            }).then(res => res.json());
+
+            const tags = await fetch(`${apiBase}/Tag`, {
+                headers: { Authorization: `Bearer ${token}` }
+            }).then(res => res.json());
+
+            // Fill form
+            document.getElementById("newsArticleId").value = article.newsArticleId;
+            document.getElementById("newsTitle").value = article.newsTitle;
+            document.getElementById("headline").value = article.headline;
+            document.getElementById("newsContent").value = article.newsContent;
+            document.getElementById("newsSource").value = article.newsSource;
+            document.getElementById("newsStatus").value = article.newsStatus;
+
+            categories.forEach(c => {
+                const option = document.createElement("option");
+                option.value = c.categoryId;
+                option.textContent = c.categoryName;
+                if (c.categoryId === article.categoryId) option.selected = true;
+                document.getElementById("categoryId").appendChild(option);
+            });
+
+            tags.forEach(tag => {
+                const div = document.createElement("div");
+                div.className = "form-check";
+                div.innerHTML = `
+                    <input class="form-check-input" type="checkbox" name="tagIds" value="${tag.tagId}" id="tag_${tag.tagId}"
+                        ${article.tags?.some(t => t.tagId === tag.tagId) ? "checked" : ""}>
+                    <label class="form-check-label" for="tag_${tag.tagId}">${tag.tagName}</label>
+                `;
+                document.getElementById("tagList").appendChild(div);
+            });
+        }
+
+        document.getElementById("editForm").addEventListener("submit", async function (e) {
+            e.preventDefault();
+            const tagIds = Array.from(document.querySelectorAll("input[name='tagIds']:checked")).map(x => parseInt(x.value));
+
+            const payload = {
+                newsArticle: {
+                    newsArticleId: document.getElementById("newsArticleId").value,
+                    newsTitle: document.getElementById("newsTitle").value,
+                    headline: document.getElementById("headline").value,
+                    newsContent: document.getElementById("newsContent").value,
+                    newsSource: document.getElementById("newsSource").value,
+                    categoryId: parseInt(document.getElementById("categoryId").value),
+                    newsStatus: document.getElementById("newsStatus").value === "true"
+                },
+                tagIds: tagIds
+            };
+
+            const response = await fetch(`${apiBase}/NewsArticle/v1`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (response.ok) {
+                alert("✅ Updated successfully!");
+                window.location.href = "/NewsArticles/Index";
+            } else {
+                const err = await response.json();
+                console.error(err);
+                alert("❌ Failed to update article.");
+            }
+        });
+
+        loadData();
+    </script>
+</body>
+</html>

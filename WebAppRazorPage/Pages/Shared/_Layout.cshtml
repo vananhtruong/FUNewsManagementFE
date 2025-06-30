@@ -13,7 +13,9 @@
             letter-spacing: 2px;
         }
 
-        .navbar .nav-link.active, .navbar .nav-link:focus, .navbar .nav-link:hover {
+        .navbar .nav-link.active,
+        .navbar .nav-link:focus,
+        .navbar .nav-link:hover {
             color: #0d6efd !important;
         }
 
@@ -32,7 +34,7 @@
     <header>
         <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm border-bottom">
             <div class="container-fluid">
-                <a class="navbar-brand fw-bold d-flex align-items-center" asp-controller="Home" asp-action="Index">
+                <a class="navbar-brand fw-bold d-flex align-items-center" href="/">
                     <i class="bi bi-newspaper me-2 text-primary" style="font-size: 1.6rem;"></i>
                     <span>FUNews Management</span>
                 </a>
@@ -41,91 +43,8 @@
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="collapse navbar-collapse" id="navbarNav">
-                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-
-                        @if (User.Identity.IsAuthenticated)
-                        {
-                            @if (User.IsInRole("Admin"))
-                            {
-                                <li class="nav-item">
-                                    <a class="nav-link" asp-page="/SystemAccounts/Index">
-                                        <i class="bi bi-people"></i> Manage Accounts
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" asp-page="/Reports/Index">
-                                        <i class="bi bi-bar-chart"></i> Reports
-                                    </a>
-                                </li>
-                            }
-                            @if (User.IsInRole("Staff"))
-                            {
-                                <li class="nav-item">
-                                    <a class="nav-link" asp-page="/NewsArticles/Index">
-                                        <i class="bi bi-file-earmark-text"></i> Manage News
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" asp-page="/Categories/Index">
-                                        <i class="bi bi-collection"></i> Manage Category
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" asp-page="/Tags/Index">
-                                        <i class="bi bi-tags"></i> Manage Tag
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" asp-page="/NewsArticles/History">
-                                        <i class="bi bi-clock-history"></i> View History
-                                    </a>
-                                </li>
-                            }
-                            @if (User.IsInRole("Lecturer"))
-                            {
-                                <li class="nav-item">
-                                    <a class="nav-link" asp-page="/NewsArticles/LecturerNews">
-                                        <i class="bi bi-journal-richtext"></i> View News
-                                    </a>
-                                </li>
-                            }
-                        }
-                    </ul>
-
-                    <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-                        @if (User.Identity.IsAuthenticated)
-                        {
-                            <li class="nav-item d-flex align-items-center me-2">
-                                @if (User.IsInRole("Staff"))
-                                {
-                                    <a class="nav-link user-greeting" asp-page="/SystemAccounts/EditProfile">
-                                        <i class="bi bi-person-circle me-1"></i> Hello, @User.Identity.Name
-                                    </a>
-                                }
-                                else
-                                {
-                                    <span class="nav-link user-greeting">
-                                        <i class="bi bi-person-circle me-1"></i> Hello, @User.Identity.Name
-                                    </span>
-                                }
-                            </li>
-                            <li class="nav-item">
-                                <form asp-page="/SystemAccounts/Logout" method="post" class="d-inline">
-                                    <button type="submit" class="btn btn-outline-danger btn-sm">
-                                        <i class="bi bi-box-arrow-right"></i> Logout
-                                    </button>
-                                </form>
-                            </li>
-                        }
-                        else
-                        {
-                            <li class="nav-item">
-                                <a class="btn btn-primary btn-sm" asp-page="/SystemAccounts/Login">
-                                    <i class="bi bi-box-arrow-in-right"></i> Login
-                                </a>
-                            </li>
-                        }
-                    </ul>
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0" id="navLinks"></ul>
+                    <ul class="navbar-nav ms-auto mb-2 mb-lg-0" id="userSection"></ul>
                 </div>
             </div>
         </nav>
@@ -141,5 +60,109 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            loadNavbarContent();
+        });
+
+        async function loadNavbarContent() {
+            const token = localStorage.getItem("jwtToken");
+            const navLinks = document.getElementById("navLinks");
+            const userSection = document.getElementById("userSection");
+
+            if (!token) {
+                userSection.innerHTML = `
+                    <li class="nav-item">
+                        <a class="btn btn-primary btn-sm" href="/SystemAccounts/Login">
+                            <i class="bi bi-box-arrow-in-right"></i> Login
+                        </a>
+                    </li>`;
+                return;
+            }
+
+            const userInfo = parseJwt(token);
+            const role = userInfo?.role;
+            const name = userInfo["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] || "User";
+
+            let navHtml = "";
+            let userHtml = `
+                <li class="nav-item d-flex align-items-center me-2">
+                    <span class="nav-link user-greeting">
+                        <i class="bi bi-person-circle me-1"></i> Hello, ${name}
+                    </span>
+                </li>
+                <li class="nav-item">
+                    <button onclick="logout()" class="btn btn-outline-danger btn-sm">
+                        <i class="bi bi-box-arrow-right"></i> Logout
+                    </button>
+                </li>`;
+
+            if (role === "1") {
+                navHtml += `
+                    <li class="nav-item"><a class="nav-link" href="/NewsArticles/Index"><i class="bi bi-file-earmark-text"></i> Manage News</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/Categories/Index"><i class="bi bi-collection"></i> Manage Category</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/Tags/Index"><i class="bi bi-tags"></i> Manage Tag</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/NewsArticles/History"><i class="bi bi-clock-history"></i> View History</a></li>`;
+            } else if (role === "2") {
+                try {
+                    const res = await fetch("https://localhost:7126/api/Category", {
+                        headers: { "Authorization": "Bearer " + token }
+                    });
+                    const categories = await res.json();
+                    const parents = categories.filter(c => c.parentCategoryId === null);
+                    const children = categories.filter(c => c.parentCategoryId !== null);
+
+                    parents.forEach(parent => {
+                        const subs = children.filter(c => c.parentCategoryId === parent.categoryId);
+                        if (subs.length > 0) {
+                            navHtml += `
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" id="dropdown-${parent.categoryId}" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        ${parent.categoryName}
+                                    </a>
+                                    <ul class="dropdown-menu" aria-labelledby="dropdown-${parent.categoryId}">
+                                        ${subs.map(sub => `
+                                            <li><a class="dropdown-item" href="/NewsArticles/LecturerNews?categoryId=${sub.categoryId}">${sub.categoryName}</a></li>
+                                        `).join("")}
+                                    </ul>
+                                </li>`;
+                        } else {
+                            navHtml += `<li class="nav-item"><a class="nav-link" href="/NewsArticles/LecturerNews?categoryId=${parent.categoryId}">${parent.categoryName}</a></li>`;
+                        }
+                    });
+                } catch (err) {
+                    console.error("Failed to load categories", err);
+                    navHtml += `<li class="nav-item"><a class="nav-link" href="/NewsArticles/LecturerNews">View News</a></li>`;
+                }
+            } else if (role === "3") {
+                navHtml += `
+                    <li class="nav-item"><a class="nav-link" href="/SystemAccounts/Index"><i class="bi bi-people"></i> Manage Accounts</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/Reports/Index"><i class="bi bi-bar-chart"></i> Reports</a></li>`;
+            }
+
+            navLinks.innerHTML = navHtml;
+            userSection.innerHTML = userHtml;
+        }
+
+        function logout() {
+            localStorage.removeItem("jwtToken");
+            window.location.href = "/SystemAccounts/Login";
+        }
+
+        function parseJwt(token) {
+            try {
+                const base64Url = token.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+                return JSON.parse(jsonPayload);
+            } catch (e) {
+                return null;
+            }
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

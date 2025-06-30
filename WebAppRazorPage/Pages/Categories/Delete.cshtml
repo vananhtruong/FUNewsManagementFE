@@ -2,7 +2,67 @@
 @model FUNewsManagementSystem.Pages.Categories.DeleteModel
 
 @{
-    ViewData["Title"] = "Delete";
+    ViewData["Title"] = "Delete Category";
 }
 
-<h1>Delete</h1>
+<div class="container mt-5">
+    <h2 class="text-center text-danger">⚠️ Delete Category</h2>
+
+    <div class="card border-danger mt-4">
+        <div class="card-body">
+            <p>Are you sure you want to delete this category?</p>
+            <div id="categoryDetails" class="mb-3"></div>
+
+            <div class="d-flex justify-content-between">
+                <a href="/Categories/Index" class="btn btn-secondary">❌ Cancel</a>
+                <button id="confirmDeleteBtn" class="btn btn-danger">🗑️ Confirm Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const token = localStorage.getItem("jwtToken");
+    const urlParams = new URLSearchParams(window.location.search);
+    const categoryId = urlParams.get("id");
+
+    fetch(`https://localhost:7126/api/Category/${categoryId}`, {
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    })
+    .then(res => res.json())
+    .then(category => {
+        const details = `
+            <strong>Name:</strong> ${category.categoryName}<br>
+            <strong>Description:</strong> ${category.categoryDesciption}<br>
+            <strong>Status:</strong> ${category.isActive ? 'Active' : 'Inactive'}
+        `;
+        document.getElementById("categoryDetails").innerHTML = details;
+    })
+    .catch(err => {
+        document.getElementById("categoryDetails").innerHTML = '<span class="text-danger">❌ Failed to load category.</span>';
+        console.error(err);
+    });
+
+    document.getElementById("confirmDeleteBtn").addEventListener("click", function () {
+        if (!confirm("Are you sure you want to delete this category?")) return;
+
+        fetch(`https://localhost:7126/api/Category/${categoryId}`, {
+            method: "DELETE",
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        })
+        .then(res => {
+            if (res.ok) {
+                window.location.href = "/Categories/Index";
+            } else {
+                return res.text().then(msg => { throw new Error(msg); });
+            }
+        })
+        .catch(err => {
+            alert("❌ Failed to delete category. " + err.message);
+        });
+    });
+</script>

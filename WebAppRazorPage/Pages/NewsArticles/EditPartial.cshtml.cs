@@ -10,7 +10,6 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace FUNewsManagementSystem.Pages.NewsArticles
 {
-    [Authorize(Policy = "StaffOnly")]
     public class EditPartialModel : PageModel
     {
         private readonly IHttpClientFactory _httpClientFactory;

@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace WebAppRazorPage.Pages.NewsArticles
 {
-    [Authorize(Policy = "StaffOnly")]
     public class HistoryModel : PageModel
     {
         private readonly IHttpClientFactory _httpClientFactory;

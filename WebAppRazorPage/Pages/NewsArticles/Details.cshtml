@@ -1,6 +1,5 @@
 ﻿@page
 @model FUNewsManagementSystem.Pages.NewsArticles.DetailsModel
-
 @{
     ViewData["Title"] = "News Article Details";
 }
@@ -8,87 +7,67 @@
 <div class="container mt-4">
     <h1 class="text-center">News Article Details</h1>
 
-   
     <div class="card">
         <div class="card-body">
-
-         
             <table class="table table-bordered table-striped">
-                <tbody>
-                    <tr>
-                        <th class="col-sm-2">@Html.DisplayNameFor(model => model.NewsArticle.NewsArticleId)</th>
-                        <td>@Html.DisplayFor(model => model.NewsArticle.NewsArticleId)</td>
-                    </tr>
-                    <tr>
-                        <th>@Html.DisplayNameFor(model => model.NewsArticle.NewsTitle)</th>
-                        <td>@Html.DisplayFor(model => model.NewsArticle.NewsTitle)</td>
-                    </tr>
-                    <tr>
-                        <th>@Html.DisplayNameFor(model => model.NewsArticle.Headline)</th>
-                        <td>@Html.DisplayFor(model => model.NewsArticle.Headline)</td>
-                    </tr>
-                    <tr>
-                        <th>@Html.DisplayNameFor(model => model.NewsArticle.CreatedDate)</th>
-                        <td>@Html.DisplayFor(model => model.NewsArticle.CreatedDate)</td>
-                    </tr>
-                    <tr>
-                        <th>@Html.DisplayNameFor(model => model.NewsArticle.NewsContent)</th>
-                        <td>@Html.DisplayFor(model => model.NewsArticle.NewsContent)</td>
-                    </tr>
-                    <tr>
-                        <th>@Html.DisplayNameFor(model => model.NewsArticle.NewsSource)</th>
-                        <td>@Html.DisplayFor(model => model.NewsArticle.NewsSource)</td>
-                    </tr>
-                    <tr>
-                        <
-                        <th>@Html.DisplayNameFor(model => model.NewsArticle.NewsStatus)</th>
-                        <td>
-                            @(Model.NewsArticle.NewsStatus ? "Active" : "Inactive")
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>@Html.DisplayNameFor(model => model.NewsArticle.UpdatedById)</th>
-                        <td>@Html.DisplayFor(model => model.NewsArticle.UpdatedById)</td>
-                    </tr>
-                    <tr>
-                        <th>@Html.DisplayNameFor(model => model.NewsArticle.ModifiedDate)</th>
-                        <td>@Html.DisplayFor(model => model.NewsArticle.ModifiedDate)</td>
-                    </tr>
-                    <tr>
-                        <th>@Html.DisplayNameFor(model => model.NewsArticle.Category.CategoryName)</th>
-                        <td>@Html.DisplayFor(model => model.NewsArticle.Category.CategoryName)</td>
-                    </tr>
-                    <tr>
-                        <th>@Html.DisplayNameFor(model => model.NewsArticle.CreatedBy)</th>
-                        <td>@Html.DisplayFor(model => model.NewsArticle.CreatedBy.AccountName)</td>
-                    </tr>
-                    <tr>
-                        <th>Tags</th>
-                        <td>
-                            @if (Model.NewsArticle.Tags != null && Model.NewsArticle.Tags.Any())
-                            {
-                                <ul class="list-inline">
-                                    @foreach (var tag in Model.NewsArticle.Tags)
-                                    {
-                                        <li class="list-inline-item badge bg-secondary">@tag.TagName</li>
-                                    }
-                                </ul>
-                            }
-                            else
-                            {
-                                <p class="text-muted">No tags available.</p>
-                            }
-                        </td>
-                    </tr>
+                <tbody id="articleDetailsBody">
+                    <!-- Content will be inserted via JavaScript -->
                 </tbody>
             </table>
-
         </div>
     </div>
 
-    <!-- Action Buttons -->
     <div class="mt-4 text-center">
-    
-        <a class="btn btn-secondary" asp-page="/NewsArticles/Index">Back to List</a>
+        <a class="btn btn-secondary" href="/NewsArticles/Index">Back to List</a>
     </div>
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", async function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        const articleId = urlParams.get("id");
+        const token = localStorage.getItem("jwtToken");
+        const tbody = document.getElementById("articleDetailsBody");
+
+        if (!articleId || !token) {
+            tbody.innerHTML = '<tr><td colspan="2">❌ Invalid access.</td></tr>';
+            return;
+        }
+
+        try {
+            const res = await fetch(`https://localhost:7126/api/NewsArticle/${articleId}`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            const article = await res.json();
+
+            if (!article) {
+                tbody.innerHTML = '<tr><td colspan="2">❌ Article not found.</td></tr>';
+                return;
+            }
+
+            const category = await fetch(`https://localhost:7126/api/Category/${article.categoryId}`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            }).then(res => res.json());
+
+            const rows = `
+                <tr><th>ID</th><td>${article.newsArticleId}</td></tr>
+                <tr><th>Title</th><td>${article.newsTitle}</td></tr>
+                <tr><th>Headline</th><td>${article.headline}</td></tr>
+                <tr><th>Created Date</th><td>${new Date(article.createdDate).toLocaleString()}</td></tr>
+                <tr><th>Content</th><td>${article.newsContent}</td></tr>
+                <tr><th>Source</th><td>${article.newsSource}</td></tr>
+                <tr><th>Status</th><td>${article.newsStatus ? "Active" : "Inactive"}</td></tr>
+                <tr><th>Updated By</th><td>${article.updatedById || "N/A"}</td></tr>
+                <tr><th>Modified Date</th><td>${new Date(article.modifiedDate).toLocaleString()}</td></tr>
+                <tr><th>Category</th><td>${category.categoryName}</td></tr>
+                <tr><th>Tags</th><td>${article.tags && article.tags.length > 0
+                    ? article.tags.map(tag => `<span class='badge bg-secondary me-1'>${tag.tagName}</span>`).join(' ')
+                    : "<span class='text-muted'>No tags available.</span>"}</td></tr>`;
+
+            tbody.innerHTML = rows;
+        } catch (err) {
+            console.error(err);
+            tbody.innerHTML = '<tr><td colspan="2">❌ Failed to load article details.</td></tr>';
+        }
+    });
+</script>
