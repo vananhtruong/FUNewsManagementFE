@@ -28,6 +28,12 @@
             font-weight: 500;
             color: #198754 !important;
         }
+
+        /* Hover mở dropdown */
+        .navbar .dropdown:hover > .dropdown-menu {
+            display: block;
+            margin-top: 0;
+        }
     </style>
 </head>
 <body>
@@ -112,31 +118,37 @@
                     const categories = await res.json();
                     const parents = categories.filter(c => c.parentCategoryId === null);
                     const children = categories.filter(c => c.parentCategoryId !== null);
-                    navHtml += `
-                        <li class="nav-item">
-                            <a class="nav-link" href="/NewsArticles/LecturerNews">
-                                <i class="bi bi-journal-text"></i> All News
-                            </a>
-                        </li>`;
 
-                    parents.forEach(parent => {
-                        const subs = children.filter(c => c.parentCategoryId === parent.categoryId);
-                        if (subs.length > 0) {
-                            navHtml += `
-                                <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle" href="#" id="dropdown-${parent.categoryId}" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        ${parent.categoryName}
-                                    </a>
-                                    <ul class="dropdown-menu" aria-labelledby="dropdown-${parent.categoryId}">
-                                        ${subs.map(sub => `
-                                            <li><a class="dropdown-item" href="/NewsArticles/LecturerNews?categoryId=${sub.categoryId}">${sub.categoryName}</a></li>
-                                        `).join("")}
-                                    </ul>
-                                </li>`;
-                        } else {
-                            navHtml += `<li class="nav-item"><a class="nav-link" href="/NewsArticles/LecturerNews?categoryId=${parent.categoryId}">${parent.categoryName}</a></li>`;
-                        }
-                    });
+                    navHtml += `<li class="nav-item">
+                        <a class="nav-link" href="/NewsArticles/LecturerNews">
+                            <i class="bi bi-journal-text"></i> All News
+                        </a>
+                    </li>`;
+
+                            parents.forEach(parent => {
+            const subs = children.filter(c => c.parentCategoryId === parent.categoryId);
+            if (subs.length > 0) {
+                navHtml += `
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#"
+                           id="dropdown-${parent.categoryId}" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            ${parent.categoryName}
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="dropdown-${parent.categoryId}">
+                            <li><a class="dropdown-item fw-bold text-primary" href="/NewsArticles/LecturerNews?categoryId=${parent.categoryId}">
+                                <i class="bi bi-folder"></i> View All in "${parent.categoryName}"
+                            </a></li>
+                            <li><hr class="dropdown-divider" /></li>
+                            ${subs.map(sub => `
+                                <li><a class="dropdown-item" href="/NewsArticles/LecturerNews?categoryId=${sub.categoryId}">${sub.categoryName}</a></li>
+                            `).join("")}
+                        </ul>
+                    </li>`;
+            } else {
+                navHtml += `<li class="nav-item"><a class="nav-link" href="/NewsArticles/LecturerNews?categoryId=${parent.categoryId}">${parent.categoryName}</a></li>`;
+            }
+        });
+
                 } catch (err) {
                     console.error("Failed to load categories", err);
                     navHtml += `<li class="nav-item"><a class="nav-link" href="/NewsArticles/LecturerNews">View News</a></li>`;

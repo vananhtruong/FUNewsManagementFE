@@ -1,0 +1,124 @@
+﻿@page
+@{
+    ViewData["Title"] = "Create Account";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+</head>
+<body class="bg-light">
+
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-success text-white">
+                        <h4 class="mb-0">➕ Create New Account</h4>
+                    </div>
+                    <div class="card-body">
+                        <div id="errorMessage" class="alert alert-danger d-none"></div>
+                        <form id="createAccountForm">
+                            <div class="mb-3">
+                                <label for="accountId" class="form-label">🆔 Account ID</label>
+                                <input id="accountId" name="AccountId" class="form-control" required />
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="accountName" class="form-label">👤 Account Name</label>
+                                <input id="accountName" name="AccountName" class="form-control" required />
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="accountEmail" class="form-label">📧 Account Email</label>
+                                <input id="accountEmail" name="AccountEmail" type="email" class="form-control" required />
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="accountRole" class="form-label">🎭 Account Role</label>
+                                <select id="accountRole" name="AccountRole" class="form-select" required>
+                                    <option value="1">🌟 Staff</option>
+                                    <option value="2">🎓 Lecturer</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="accountPassword" class="form-label">🔒 Password</label>
+                                <input id="accountPassword" name="AccountPassword" type="password" class="form-control" required />
+                            </div>
+
+                            <div class="d-flex justify-content-between">
+                                <a href="/SystemAccounts/Index" class="btn btn-secondary">⬅️ Cancel</a>
+                                <button type="submit" class="btn btn-success">✅ Create</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById("createAccountForm").addEventListener("submit", async function (e) {
+            e.preventDefault();
+
+            const data = {
+                AccountId: document.getElementById("accountId").value.trim(),
+                AccountName: document.getElementById("accountName").value.trim(),
+                AccountEmail: document.getElementById("accountEmail").value.trim(),
+                AccountRole: parseInt(document.getElementById("accountRole").value),
+                AccountPassword: document.getElementById("accountPassword").value.trim()
+            };
+
+            const token = localStorage.getItem("jwtToken");
+            const headers = {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + token
+            };
+
+            try {
+                // 🔍 Check if ID exists
+                const checkRes = await fetch("https://localhost:7126/api/SystemAccount/Any", {
+                    method: "POST",
+                    headers: headers,
+                    body: JSON.stringify(data)
+                });
+
+                if (checkRes.ok) {
+                    showError("❌ Account ID already exists. Please choose another.");
+                    return;
+                }
+
+                // ✅ Create new account
+                const createRes = await fetch("https://localhost:7126/api/SystemAccount", {
+                    method: "POST",
+                    headers: headers,
+                    body: JSON.stringify(data)
+                });
+
+                if (createRes.ok) {
+                    alert("✅ Account created successfully!");
+                    window.location.href = "/SystemAccounts/Index";
+                } else {
+                    const errorText = await createRes.text();
+                    showError(errorText || "❌ Failed to create account.");
+                }
+            } catch (err) {
+                console.error(err);
+                showError("⚠️ An error occurred while creating the account.");
+            }
+        });
+
+        function showError(msg) {
+            const box = document.getElementById("errorMessage");
+            box.textContent = msg;
+            box.classList.remove("d-none");
+        }
+    </script>
+
+</body>
+</html>

@@ -18,95 +18,122 @@
             <h1 class="display-5">📢 FPT University News</h1>
         </div>
 
-        <form method="get" class="row g-3 mb-4">
+        <form id="filterForm" class="row g-3 mb-4">
             <div class="col-md-4">
                 <label for="startDate" class="form-label">📅 Start Date</label>
-                <input type="date" asp-for="StartDate" class="form-control">
+                <input type="date" id="startDate" class="form-control">
             </div>
             <div class="col-md-4">
                 <label for="endDate" class="form-label">📅 End Date</label>
-                <input type="date" asp-for="EndDate" class="form-control">
+                <input type="date" id="endDate" class="form-control">
             </div>
             <div class="col-md-4 align-self-end">
                 <button type="submit" class="btn btn-primary">
                     🔍 Filter
                 </button>
-                <a class="btn btn-success" asp-page-handler="ExportToPDF"
-                   asp-route-startDate="@Model.StartDate"
-                   asp-route-endDate="@Model.EndDate">
-                    📄 Export Report
-                </a>
             </div>
         </form>
+
         <div class="container py-4">
-            <div> 
-                <h2>Number of articles: @Model.CountArticles</h2>
+            <div>
+                <h2>Number of articles: <span id="countArticles">0</span></h2>
             </div>
         </div>
 
         <div class="container mt-4">
             <h3 class="mb-3">📊 News Articles Statistics</h3>
-
             <div class="row">
                 <div class="col-md-6">
                     <canvas id="categoryChart"></canvas>
                 </div>
-
                 <div class="col-md-6">
                     <canvas id="staffChart"></canvas>
                 </div>
             </div>
         </div>
 
-        <div class="row g-4">
-            @foreach (var item in Model.NewsArticles)
-            {
-                <div class="col-md-6 col-lg-4">
-                    <div class="card shadow-sm h-100">
-                        <div class="card-body d-flex flex-column">
-                            <h5 class="card-title fw-bold">
-                                <a asp-page="NewDetails" asp-route-id="@item.NewsArticleId" class="text-decoration-none text-dark">
-                                    @item.NewsTitle
-                                </a>
-                            </h5>
-                            <h6 class="card-subtitle mb-2 text-muted">@item.Headline</h6>
-                            <p class="card-text flex-grow-1">
-                                @item.NewsContent.Substring(0, Math.Min(150, item.NewsContent.Length))...
-                            </p>
-                        </div>
-                        <div class="card-footer text-muted text-end">
-                            🕒 Created: @item.CreatedDate?.ToString("dd/MM/yyyy")
-                            <div class="badge bg-@(item.NewsStatus ? "success" : "secondary")">
-                                @(item.NewsStatus ? "Active" : "Inactive")
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-            }
-        </div>
+        <div class="row g-4" id="articlesContainer"></div>
     </div>
 
-
-
-
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            var categoryLabels = @Html.Raw(Json.Serialize(Model.CategoryStats.Keys));
-            var categoryData = @Html.Raw(Json.Serialize(Model.CategoryStats.Values));
+        async function loadReportData(startDate, endDate) {
+            const token = localStorage.getItem("jwtToken");
+            if (!token) {
+                alert("Unauthorized. Please log in.");
+                window.location.href = "/SystemAccounts/Login";
+                return;
+            }
 
-            var staffLabels = @Html.Raw(Json.Serialize(Model.StaffStats.Keys));
-            var staffData = @Html.Raw(Json.Serialize(Model.StaffStats.Values));
+            const headers = { "Authorization": "Bearer " + token };
+
+            const [articlesRes, categoriesRes, staffRes] = await Promise.all([
+                fetch("https://localhost:7126/api/NewsArticle", { headers }),
+                fetch("https://localhost:7126/api/Category", { headers }),
+                fetch("https://localhost:7126/api/SystemAccount", { headers })
+            ]);
+
+            if (!articlesRes.ok || !categoriesRes.ok || !staffRes.ok) {
+                alert("❌ Failed to load report data. Unauthorized or server error.");
+                return;
+            }
+
+            const articles = await articlesRes.json();
+            const categories = await categoriesRes.json();
+            const staffList = await staffRes.json();
+
+            const filteredArticles = articles.filter(a => {
+                const created = new Date(a.createdDate);
+                return (!startDate || new Date(startDate) <= created) && (!endDate || created <= new Date(endDate));
+            });
+
+            document.getElementById("countArticles").textContent = filteredArticles.length;
+
+            const container = document.getElementById("articlesContainer");
+            container.innerHTML = "";
+            filteredArticles.forEach(item => {
+                const card = `
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title fw-bold">
+                                    <a href="/Reports/NewDetails?id=${item.newsArticleId}" class="text-decoration-none text-dark">
+                                        ${item.newsTitle}
+                                    </a>
+                                </h5>
+                                <h6 class="card-subtitle mb-2 text-muted">${item.headline}</h6>
+                                <p class="card-text flex-grow-1">
+                                    ${item.newsContent.substring(0, 150)}...
+                                </p>
+                            </div>
+                            <div class="card-footer text-muted text-end">
+                                🕒 Created: ${new Date(item.createdDate).toLocaleDateString('en-GB')}
+                                <div class="badge bg-${item.newsStatus ? 'success' : 'secondary'}">
+                                    ${item.newsStatus ? 'Active' : 'Inactive'}
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+                container.insertAdjacentHTML("beforeend", card);
+            });
+
+            const categoryStats = {};
+            categories.forEach(c => {
+                categoryStats[c.categoryName] = filteredArticles.filter(a => a.categoryId === c.categoryId).length;
+            });
+
+            const staffStats = {};
+            staffList.forEach(s => {
+                staffStats[s.accountName] = filteredArticles.filter(a => a.createdById === s.accountId).length;
+            });
 
             new Chart(document.getElementById("categoryChart"), {
                 type: "bar",
                 data: {
-                    labels: categoryLabels,
+                    labels: Object.keys(categoryStats),
                     datasets: [{
                         label: "Number of Articles",
-                        data: categoryData,
+                        data: Object.values(categoryStats),
                         backgroundColor: "rgba(75, 192, 192, 0.6)",
                         borderColor: "rgba(75, 192, 192, 1)",
                         borderWidth: 1
@@ -114,38 +141,36 @@
                 },
                 options: {
                     responsive: true,
-                    scales: {
-                        y: { beginAtZero: true }
-                    }
+                    scales: { y: { beginAtZero: true } }
                 }
             });
 
-        new Chart(document.getElementById("staffChart"), {
-            type: "pie",
-            data: {
-                labels: staffLabels,
-                datasets: [{
-                    label: "Articles by Staff",
-                    data: staffData,
-                    backgroundColor: ["#FF6384", "#36A2EB", "#FFCE56", "#4CAF50", "#BA68C8"],
-                    hoverOffset: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                aspectRatio: 1 
-            }
+            new Chart(document.getElementById("staffChart"), {
+                type: "pie",
+                data: {
+                    labels: Object.keys(staffStats),
+                    datasets: [{
+                        label: "Articles by Staff",
+                        data: Object.values(staffStats),
+                        backgroundColor: ["#FF6384", "#36A2EB", "#FFCE56", "#4CAF50", "#BA68C8"],
+                        hoverOffset: 4
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, aspectRatio: 1 }
+            });
+        }
+
+        document.getElementById("filterForm").addEventListener("submit", function (e) {
+            e.preventDefault();
+            const startDate = document.getElementById("startDate").value;
+            const endDate = document.getElementById("endDate").value;
+            loadReportData(startDate, endDate);
         });
 
+        document.addEventListener("DOMContentLoaded", () => {
+            loadReportData();
         });
     </script>
-
-
-
-
-
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

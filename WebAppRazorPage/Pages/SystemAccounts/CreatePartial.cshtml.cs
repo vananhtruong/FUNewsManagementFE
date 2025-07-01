@@ -5,7 +5,6 @@ using WebAppRazorPage.Model;
 
 namespace FUNewsManagementSystem.Pages.SystemAccounts
 {
-    [Authorize(Policy = "AdminOnly")]
     public class CreatePartialModel : PageModel
     {
         private readonly IHttpClientFactory _httpClientFactory;
